@@ -20,6 +20,7 @@ public class Missile {
         // Hitung vektor kecepatan
         // Kita gunakan .rot(helicopterTransform) agar konsisten dengan
         // cara gerak maju helikopter (moveVector.rot(heliRoot))
+        //
         velocity.set(0, 0, 1f).rot(helicopterTransform).scl(missileSpeed);
     }
 }
