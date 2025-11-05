@@ -109,6 +109,9 @@ public class Main implements ApplicationListener {
         assets.load("gta3/island1/island1.g3db", Model.class);
         assets.load("gta3/water1/water1.g3db", Model.class);
 
+        // Loading Barrel1
+        assets.load("gta3/barrel1/barrel.g3db", Model.class);
+
         loading = true;
 
         Gdx.input.setCursorCatched(mouseCatched);
@@ -138,6 +141,36 @@ public class Main implements ApplicationListener {
 
         instances.add(island1Instance);
         instances.add(water1Instance);
+
+        // === MULAI KODE BARU UNTUK BARREL ===
+
+        // 1. Dapatkan model barrel dari assets
+        // (Ganti path ini jika Anda meletakkannya di tempat berbeda)
+        Model barrelModel = assets.get("gta3/barrel1/barrel.g3db", Model.class);
+
+        int barrelCount = 50; // Jumlah barrel yang ingin Anda buat
+        float spreadArea = 200f; // Area penyebaran (200x200 unit, berpusat di 0,0)
+        float groundY = -40f; // Ketinggian tanah (harus sama dengan island1)
+
+        for (int i = 0; i < barrelCount; i++) {
+            // 2. Dapatkan posisi X dan Z secara acak
+            // Kita gunakan MathUtils.random yang sudah di-import
+            float x = MathUtils.random(-spreadArea / 2, spreadArea / 2);
+            float z = MathUtils.random(-spreadArea / 2, spreadArea / 2);
+
+            // 3. Buat instance barrel baru
+            ModelInstance barrelInstance = new ModelInstance(barrelModel);
+
+            // 4. Atur posisinya
+            barrelInstance.transform.setToTranslation(x, groundY, z);
+            // Angka (2f, 2f, 2f) berarti 2x lebih besar di semua sumbu (X, Y, Z)
+            // Ganti angkanya sesuai keinginan Anda.
+            barrelInstance.transform.scale(2f, 2f, 2f);
+
+            // 5. Tambahkan ke daftar render
+            instances.add(barrelInstance);
+        }
+        // === SELESAI KODE BARU UNTUK BARREL ===
 
         heliRoot.getTranslation(cameraTarget);
 
