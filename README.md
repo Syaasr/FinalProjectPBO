@@ -4,6 +4,21 @@ A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://git
 
 This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
 
+## Feature
+- Trailer ()
+- Menu ()
+- Movement Helikopter (v)
+- Zoom In Zoom Out (v)
+- Helikopter HP ()
+- Helikopter Boost using shift ()
+- Helikopter missile launcher ()
+- Reload ()
+- Power up, health +, missile ammo +, bensin ()
+- Land generation ()
+- Enemy generation ()
+- Trash generation ()
+- Add more
+
 ## Platforms
 
 - `core`: Main module with the application logic shared by all platforms.
