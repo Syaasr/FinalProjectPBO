@@ -4,6 +4,10 @@ A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://git
 
 This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
 
+## Story
+
+Seorang pemilik kos bernama Nadiz mempunyai banyak sampah radioaktif dan toxic, dia punya helikopter untuk membuang sampah ke pulau sodok, pulau yang kosong dan banyak sampah radioaktif disana, ada seorang yang melihatnya dan ingin mencegah nadiz untuk tidak membuang sampah lagi, dengan cara menghancurkan helikopternya menggunakan misile, dan terjadi perperangan
+
 ## Platforms
 
 - `core`: Main module with the application logic shared by all platforms.
