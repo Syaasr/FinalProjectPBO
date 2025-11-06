@@ -19,10 +19,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.utils.Array;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g3d.Material;
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import java.util.Iterator;
 
 import com.dapasril.finalprojectpbo.entity.Missile;
@@ -65,11 +61,10 @@ public class Main implements ApplicationListener {
 
     // World
     ModelInstance island1Instance, water1Instance;
-
-    // === MULAI VARIABEL BARU MISIL ===
+    
+    // Missile
     Model missileModel;
     Array<Missile> activeMissiles = new Array<Missile>();
-    // === SELESAI VARIABEL BARU MISIL ===
 
     @Override
     public void create() {
@@ -77,19 +72,12 @@ public class Main implements ApplicationListener {
 
         modelBatch = new ModelBatch();
 
-        // === MULAI KODE BUAT MODEL MISIL ===
-        ModelBuilder modelBuilder = new ModelBuilder();
-        missileModel = modelBuilder.createCapsule(0.1f, 1f, 16,
-            new Material(ColorAttribute.createDiffuse(Color.RED)),
-            Usage.Position | Usage.Normal);
-        // === SELESAI KODE BUAT MODEL MISIL ===
-
         // Creating Camera
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         cam.position.set(0f, 5f, -10f);
         cam.lookAt(0, 0, 0);
         cam.near = 1f;
-        cam.far = 300f;
+        cam.far = 1000f;
         cam.update();
 
         // Creating the Environment
@@ -111,6 +99,9 @@ public class Main implements ApplicationListener {
 
         // Loading Barrel1
         assets.load("gta3/barrel1/barrel.g3db", Model.class);
+        
+        // Loading Missile1
+        assets.load("gta3/missile1/missile1.g3db", Model.class);
 
         loading = true;
 
@@ -119,7 +110,7 @@ public class Main implements ApplicationListener {
 
     private void doneLoading() {
 
-        // Getting Heli67
+        // Setting the Heli67
         Model heliBodyModel = assets.get("gta3/heli67/heli67_body.g3db", Model.class);
         Model heliPropModel = assets.get("gta3/heli67/heli67_prop.g3db", Model.class);
 
@@ -129,7 +120,7 @@ public class Main implements ApplicationListener {
         instances.add(heliBodyInstance);
         instances.add(heliPropInstance);
 
-        // Loading the world like island and water ya know
+        // Setting the world like island and water ya know
         Model island1Model = assets.get("gta3/island1/island1.g3db", Model.class);
         Model water1Model = assets.get("gta3/water1/water1.g3db", Model.class);
 
@@ -142,10 +133,7 @@ public class Main implements ApplicationListener {
         instances.add(island1Instance);
         instances.add(water1Instance);
 
-        // === MULAI KODE BARU UNTUK BARREL ===
-
-        // 1. Dapatkan model barrel dari assets
-        // (Ganti path ini jika Anda meletakkannya di tempat berbeda)
+        // Setting the barrel brother
         Model barrelModel = assets.get("gta3/barrel1/barrel.g3db", Model.class);
 
         int barrelCount = 50; // Jumlah barrel yang ingin Anda buat
@@ -153,24 +141,19 @@ public class Main implements ApplicationListener {
         float groundY = -40f; // Ketinggian tanah (harus sama dengan island1)
 
         for (int i = 0; i < barrelCount; i++) {
-            // 2. Dapatkan posisi X dan Z secara acak
-            // Kita gunakan MathUtils.random yang sudah di-import
             float x = MathUtils.random(-spreadArea / 2, spreadArea / 2);
             float z = MathUtils.random(-spreadArea / 2, spreadArea / 2);
 
-            // 3. Buat instance barrel baru
             ModelInstance barrelInstance = new ModelInstance(barrelModel);
 
-            // 4. Atur posisinya
             barrelInstance.transform.setToTranslation(x, groundY, z);
-            // Angka (2f, 2f, 2f) berarti 2x lebih besar di semua sumbu (X, Y, Z)
-            // Ganti angkanya sesuai keinginan Anda.
             barrelInstance.transform.scale(2f, 2f, 2f);
 
-            // 5. Tambahkan ke daftar render
             instances.add(barrelInstance);
         }
-        // === SELESAI KODE BARU UNTUK BARREL ===
+        
+        // Setting the missile boom boom 1
+        this.missileModel = assets.get("gta3/missile1/missile1.g3db", Model.class);
 
         heliRoot.getTranslation(cameraTarget);
 
@@ -256,19 +239,15 @@ public class Main implements ApplicationListener {
 
             heliRoot.getRotation(heliRotation); // PASTIKAN BARIS INI ADA DI SINI
 
-            // === MULAI KODE TEMBAK MISIL ===
             if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                Missile missile = new Missile(missileModel, heliRoot); // UBAH MENJADI INI
+                Missile missile = new Missile(missileModel, heliRoot);
                 activeMissiles.add(missile);
-                instances.add(missile.instance); // Tambahkan ke list render
+                instances.add(missile.instance);
             }
-            // === SELESAI KODE TEMBAK MISIL ===
 
-            // SMOOTH FOLLOW (Kode ini sudah benar)
             cameraTarget.lerp(playerPos, Gdx.graphics.getDeltaTime() * smoothnessFollow);
         }
 
-        // === MULAI KODE UPDATE MISIL ===
         Iterator<Missile> iter = activeMissiles.iterator();
         while(iter.hasNext()) {
             Missile missile = iter.next();
@@ -287,7 +266,6 @@ public class Main implements ApplicationListener {
                     missile.velocity.z * Gdx.graphics.getDeltaTime());
             }
         }
-        // === SELESAI KODE UPDATE MISIL === //
 
 
         modelBatch.begin(cam);

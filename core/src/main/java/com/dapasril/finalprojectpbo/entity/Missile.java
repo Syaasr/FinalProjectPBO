@@ -9,8 +9,8 @@ public class Missile {
 	public ModelInstance instance;
 	public Vector3 velocity = new Vector3();
 	public float lifeTimer = 0f;
-	public static float missileSpeed = 50f; // Kecepatan misil
-	public static float missileLifetime = 4f; // Waktu hidup misil (4 detik)
+	public static float missileSpeed = 90f; // Kecepatan misil
+	public static float missileLifetime = 3f; // Waktu hidup misil (4 detik)
 	
 	public Missile(Model model, Matrix4 helicopterTransform) {
 		instance = new ModelInstance(model);

@@ -1,12 +1,21 @@
-# FinalProjectPBO
+# Project Garbage Termination Agency
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
+By Daffa Rahman and Asril  
 
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
-
-## Story
-
-Seorang pemilik kos bernama Nadiz mempunyai banyak sampah radioaktif dan toxic, dia punya helikopter untuk membuang sampah ke pulau sodok, pulau yang kosong dan banyak sampah radioaktif disana, ada seorang yang melihatnya dan ingin mencegah nadiz untuk tidak membuang sampah lagi, dengan cara menghancurkan helikopternya menggunakan misile, dan terjadi perperangan
+## Feature
+- [ ] Cinematic Trailer
+- [ ] Gameplay Trailer
+- [ ] Menu
+- [x] Movement Helikopter
+- [x] Zoom In Zoom Out
+- [ ] Helikopter HP
+- [ ] Helikopter Boost using shift
+- [ ] Helikopter missile launcher
+- [ ] Reload
+- [ ] Power up, health +, missile ammo +, bensi
+- [ ] Land generation
+- [ ] Enemy generation
+- [ ] Trash generation
 
 ## Platforms
 
