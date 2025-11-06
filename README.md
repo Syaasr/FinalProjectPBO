@@ -1,23 +1,21 @@
-# FinalProjectPBO
+# Project Garbage Termination Agency
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
-
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+By Daffa Rahman and Asril  
 
 ## Feature
-- Trailer ()
-- Menu ()
-- Movement Helikopter (v)
-- Zoom In Zoom Out (v)
-- Helikopter HP ()
-- Helikopter Boost using shift ()
-- Helikopter missile launcher ()
-- Reload ()
-- Power up, health +, missile ammo +, bensin ()
-- Land generation ()
-- Enemy generation ()
-- Trash generation ()
-- Add more
+- [ ] Cinematic Trailer
+- [ ] Gameplay Trailer
+- [ ] Menu
+- [x] Movement Helikopter
+- [x] Zoom In Zoom Out
+- [ ] Helikopter HP
+- [ ] Helikopter Boost using shift
+- [ ] Helikopter missile launcher
+- [ ] Reload
+- [ ] Power up, health +, missile ammo +, bensi
+- [ ] Land generation
+- [ ] Enemy generation
+- [ ] Trash generation
 
 ## Platforms
 
