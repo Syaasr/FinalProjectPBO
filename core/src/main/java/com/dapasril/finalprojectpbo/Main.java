@@ -98,7 +98,7 @@ public class Main implements ApplicationListener {
         assets.load("gta3/water1/water1.g3db", Model.class);
 
         // Loading Barrel1
-        assets.load("gta3/barrel1/barrel.g3db", Model.class);
+        assets.load("gta3/barrel1/barrel1.g3db", Model.class);
         
         // Loading Missile1
         assets.load("gta3/missile1/missile1.g3db", Model.class);
@@ -134,11 +134,11 @@ public class Main implements ApplicationListener {
         instances.add(water1Instance);
 
         // Setting the barrel brother
-        Model barrelModel = assets.get("gta3/barrel1/barrel.g3db", Model.class);
+        Model barrelModel = assets.get("gta3/barrel1/barrel1.g3db", Model.class);
 
         int barrelCount = 50; // Jumlah barrel yang ingin Anda buat
         float spreadArea = 200f; // Area penyebaran (200x200 unit, berpusat di 0,0)
-        float groundY = -40f; // Ketinggian tanah (harus sama dengan island1)
+        float groundY = -38; // Ketinggian tanah (harus sama dengan island1)
 
         for (int i = 0; i < barrelCount; i++) {
             float x = MathUtils.random(-spreadArea / 2, spreadArea / 2);
@@ -167,7 +167,7 @@ public class Main implements ApplicationListener {
             this.doneLoading();
         }
 
-        Gdx.gl.glClearColor(0, 0.25f, 1f, 1f);
+        Gdx.gl.glClearColor(0.45f, 0.78f, 1f, 1f);
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
