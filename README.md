@@ -10,8 +10,8 @@ By Daffa Rahman and Asril
 - [x] Zoom In Zoom Out
 - [ ] Helikopter HP
 - [ ] Helikopter Boost using shift
-- [ ] Helikopter missile launcher
-- [ ] Reload
+- [x] Helikopter missile launcher
+- [x] Reload
 - [ ] Power up, health +, missile ammo +, bensi
 - [ ] Land generation
 - [ ] Enemy generation
