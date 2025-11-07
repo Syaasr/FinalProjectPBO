@@ -14,11 +14,13 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion; // BARU
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.utils.Array;
-
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.Color;
 import java.util.Iterator;
 
 import com.dapasril.finalprojectpbo.entity.Missile;
@@ -61,16 +63,32 @@ public class Main implements ApplicationListener {
 
     // World
     ModelInstance island1Instance, water1Instance;
-    
+
     // Missile
     Model missileModel;
     Array<Missile> activeMissiles = new Array<Missile>();
+
+    // Ammo
+    int maxAmmoInClip = 10;
+    int currentAmmoInClip = 10;
+    int totalReserveAmmo = 50;
+
+    boolean isReloading = false;
+    float reloadCooldownTime = 3.0f;
+    float currentReloadTimer = 0f;
+
+    SpriteBatch spriteBatch;
+    BitmapFont font;
 
     @Override
     public void create() {
         Bullet.init();
 
         modelBatch = new ModelBatch();
+
+        spriteBatch = new SpriteBatch();
+        font = new BitmapFont();
+        font.getData().setScale(2f);
 
         // Creating Camera
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -99,7 +117,7 @@ public class Main implements ApplicationListener {
 
         // Loading Barrel1
         assets.load("gta3/barrel1/barrel1.g3db", Model.class);
-        
+
         // Loading Missile1
         assets.load("gta3/missile1/missile1.g3db", Model.class);
 
@@ -151,7 +169,7 @@ public class Main implements ApplicationListener {
 
             instances.add(barrelInstance);
         }
-        
+
         // Setting the missile boom boom 1
         this.missileModel = assets.get("gta3/missile1/missile1.g3db", Model.class);
 
@@ -225,6 +243,12 @@ public class Main implements ApplicationListener {
                 heliRoot.rotate(new Vector3(1f, 0, 0), -2f);
             }
 
+            float scrollAmount = Gdx.input.getRoll();
+            if (scrollAmount != 0) {
+                float scrollSpeed = 1.5f;
+                camDistanceFromTarget += scrollAmount * scrollSpeed;
+            }
+
             float zoomSpeed = 0.2f;
             if(Gdx.input.isKeyPressed(Input.Keys.I)) {
                 camDistanceFromTarget -= zoomSpeed; // Zoom In
@@ -236,16 +260,51 @@ public class Main implements ApplicationListener {
             camDistanceFromTarget = MathUtils.clamp(camDistanceFromTarget, minZoom, maxZoom);
 
             heliRoot.getTranslation(playerPos);
+            heliRoot.getRotation(heliRotation);
 
-            heliRoot.getRotation(heliRotation); // PASTIKAN BARIS INI ADA DI SINI
-
-            if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                Missile missile = new Missile(missileModel, heliRoot);
-                activeMissiles.add(missile);
-                instances.add(missile.instance);
+            if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseCatched)) {
+                if (currentAmmoInClip > 0 && !isReloading) {
+                    Missile missile = new Missile(missileModel, heliRoot);
+                    activeMissiles.add(missile);
+                    instances.add(missile.instance);
+                    currentAmmoInClip--;
+                    // (Opsional: untuk debug di konsol)
+                    System.out.println("MISIL DITEMBAKKAN! Sisa klip: " + currentAmmoInClip);
+                } else if (isReloading) {
+                    // (Opsional: untuk debug di konsol)
+                    System.out.println("SEDANG RELOAD!");
+                } else {
+                    // (Opsional: untuk debug di konsol)
+                    System.out.println("AMMO HABIS! TEKAN 'R' UNTUK RELOAD!");
+                }
             }
 
             cameraTarget.lerp(playerPos, Gdx.graphics.getDeltaTime() * smoothnessFollow);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            if (!isReloading && currentAmmoInClip < maxAmmoInClip && totalReserveAmmo > 0) {
+                isReloading = true;
+                currentReloadTimer = 0f;
+                // (Opsional: untuk debug di konsol)
+                System.out.println("RELOADING... (Tunggu " + reloadCooldownTime + " detik)");
+            } else if (totalReserveAmmo <= 0 && currentAmmoInClip < maxAmmoInClip) {
+                // (Opsional: untuk debug di konsol)
+                System.out.println("AMMO CADANGAN HABIS!");
+            }
+        }
+
+        if (isReloading) {
+            currentReloadTimer += Gdx.graphics.getDeltaTime();
+            if (currentReloadTimer >= reloadCooldownTime) {
+                isReloading = false;
+                int ammoNeeded = maxAmmoInClip - currentAmmoInClip;
+                int ammoToReload = Math.min(ammoNeeded, totalReserveAmmo);
+                currentAmmoInClip += ammoToReload;
+                totalReserveAmmo -= ammoToReload;
+                // (Opsional: untuk debug di konsol)
+                System.out.println("RELOAD SELESAI! Klip: " + currentAmmoInClip + " / Cadangan: " + totalReserveAmmo);
+            }
         }
 
         Iterator<Missile> iter = activeMissiles.iterator();
@@ -271,6 +330,17 @@ public class Main implements ApplicationListener {
         modelBatch.begin(cam);
         modelBatch.render(instances, environment);
         modelBatch.end();
+
+        spriteBatch.begin();
+
+        String ammoText = "AMMO: " + currentAmmoInClip + " / " + totalReserveAmmo;
+        font.draw(spriteBatch, ammoText, 10, Gdx.graphics.getHeight() - 10);
+        if (isReloading) {
+            float reloadProgress = (currentReloadTimer / reloadCooldownTime) * 100;
+            String reloadText = String.format("RELOADING... (%.0f%%)", reloadProgress);
+            font.draw(spriteBatch, reloadText, 10, Gdx.graphics.getHeight() - 30);
+        }
+        spriteBatch.end();
 
         camPivot.set(cameraTarget);
 
@@ -305,6 +375,9 @@ public class Main implements ApplicationListener {
         instances.clear();
         assets.dispose();
         missileModel.dispose();
+
+        spriteBatch.dispose();
+        font.dispose();
     }
 
     @Override
@@ -312,6 +385,10 @@ public class Main implements ApplicationListener {
         cam.viewportWidth = width;
         cam.viewportHeight = height;
         cam.update();
+
+        if (spriteBatch != null) {
+            spriteBatch.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
+        }
     }
 
     @Override
