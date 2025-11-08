@@ -20,15 +20,16 @@ public class HelicopterGenerator {
 	public boolean rotorCanMove;
 	public float rotorSpeed = 25f;
 	
-	public HelicopterGenerator() {
+	public HelicopterGenerator(boolean isPlayable) {
+		this.isPlayable = isPlayable;
 		this.localFuselage = new Matrix4();
 		this.localRotor = new Matrix4();
 		this.rootTransform = new Matrix4().setToTranslation(0, 0, 0);
 	}
 	
-	public void loadModels(AssetManager assetManager) {
-		assetManager.load(this.fuselagePath, Model.class);
-		assetManager.load(this.rotorPath, Model.class);
+	public static void loadModels(AssetManager assetManager, HelicopterGenerator heli) {
+		assetManager.load(heli.fuselagePath, Model.class);
+		assetManager.load(heli.rotorPath, Model.class);
 	}
 	
 	public void getModels(AssetManager assetManager) {
