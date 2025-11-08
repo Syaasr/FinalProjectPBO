@@ -26,6 +26,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFont
 import com.badlogic.gdx.graphics.Color;
 import java.util.Iterator;
 
+import com.dapasril.finalprojectpbo.entity.HelicopterGenerator;
 import com.dapasril.finalprojectpbo.entity.Missile;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -40,13 +41,9 @@ public class Main implements ApplicationListener {
     public Array<ModelInstance> instances = new Array<ModelInstance>();
     public boolean loading;
 
-    // Heli
-    Matrix4 heliRoot = new Matrix4().setToTranslation(0, 0, 0);
-    Matrix4 heliBodyLocal = new Matrix4();
-    Matrix4 heliPropLocal = new Matrix4();
-    ModelInstance heliBodyInstance, heliPropInstance;
-    float rotorSpeed = 25f;
-
+    // Heli - Now this whole helicopter thing is simpler, right?
+    HelicopterGenerator heliPlayer;
+    
     // Camera Controls
     Matrix4 cameraRoot = new Matrix4().setToTranslation(0, 0, 0);
     Matrix4 cameraPositionLocal = new Matrix4();
@@ -54,11 +51,11 @@ public class Main implements ApplicationListener {
     float camDistanceFromTarget = 17f;
     private float yaw = 0;
     private float pitch = 20;
-    private float minZoom = 5f; // Batas zoom paling dekat
-    private float maxZoom = 50f; // Batas zoom paling jauh
+    private float minZoom = 5f;
+    private float maxZoom = 50f;
 
     private Vector3 cameraTarget = new Vector3();
-    private Quaternion heliRotation = new Quaternion();
+    private Quaternion playerRot = new Quaternion();
     private Vector3 playerPos = new Vector3();
     private float smoothnessFollow = 5f;
     private float smoothnessRecenter = 3f;
@@ -77,7 +74,7 @@ public class Main implements ApplicationListener {
     int totalReserveAmmo = 50;
 
     boolean isReloading = false;
-    float reloadCooldownTime = 3.0f;
+    float reloadCooldownTime = 2.0f;
     float currentReloadTimer = 0f;
     
     // Texts
@@ -87,7 +84,7 @@ public class Main implements ApplicationListener {
     final int fontSizes = 6;
     final int initialFontSize = 16; 
     FreeTypeFontGenerator fontGenerator;
-
+    
     @Override
     public void create() {
         Bullet.init();
@@ -129,6 +126,8 @@ public class Main implements ApplicationListener {
         // ModelBuilder modelBuilder = new ModelBuilder();
 
         assets = new AssetManager();
+        
+        this.heliPlayer = new HelicopterGenerator();
 
         // Loading the Heli67
         assets.load("gta3/heli67/heli67_body.g3db", Model.class);
@@ -150,17 +149,9 @@ public class Main implements ApplicationListener {
     }
 
     private void doneLoading() {
-
-        // Setting the Heli67
-        Model heliBodyModel = assets.get("gta3/heli67/heli67_body.g3db", Model.class);
-        Model heliPropModel = assets.get("gta3/heli67/heli67_prop.g3db", Model.class);
-
-        heliBodyInstance = new ModelInstance(heliBodyModel);
-        heliPropInstance = new ModelInstance(heliPropModel);
-
-        instances.add(heliBodyInstance);
-        instances.add(heliPropInstance);
-
+    	this.heliPlayer.getModels(assets);
+    	this.heliPlayer.addToInstances(instances);
+    	
         // Setting the world like island and water ya know
         Model island1Model = assets.get("gta3/island1/island1.g3db", Model.class);
         Model water1Model = assets.get("gta3/water1/water1.g3db", Model.class);
@@ -177,9 +168,9 @@ public class Main implements ApplicationListener {
         // Setting the barrel brother
         Model barrelModel = assets.get("gta3/barrel1/barrel1.g3db", Model.class);
 
-        int barrelCount = 50; // Jumlah barrel yang ingin Anda buat
-        float spreadArea = 200f; // Area penyebaran (200x200 unit, berpusat di 0,0)
-        float groundY = -38; // Ketinggian tanah (harus sama dengan island1)
+        int barrelCount = 50;
+        float spreadArea = 200f;
+        float groundY = -38;
 
         for (int i = 0; i < barrelCount; i++) {
             float x = MathUtils.random(-spreadArea / 2, spreadArea / 2);
@@ -196,7 +187,7 @@ public class Main implements ApplicationListener {
         // Setting the missile boom boom 1
         this.missileModel = assets.get("gta3/missile1/missile1.g3db", Model.class);
 
-        heliRoot.getTranslation(cameraTarget);
+        this.heliPlayer.rootTransform.getTranslation(cameraTarget);
 
         // after loading all
         loading = false;
@@ -221,49 +212,47 @@ public class Main implements ApplicationListener {
         }
 
         boolean isMovingForward = false;
-
-        if(heliPropInstance != null && heliBodyInstance != null) {
-            heliPropLocal.rotate(new Vector3(0, 1f, 0), rotorSpeed);
-
-            heliBodyInstance.transform.set(heliRoot).mul(heliBodyLocal);
-            heliPropInstance.transform.set(heliRoot).mul(heliPropLocal);
+        this.heliPlayer.rotorCanMove = true;
+        if(this.heliPlayer.nullChecker()) {
+        	
+        	this.heliPlayer.update();
 
             // Heli Control
             isMovingForward = Gdx.input.isKeyPressed(Input.Keys.W);
             if(isMovingForward) {
                 moveVector.set(0, 0.1f, 0.2f);
-                moveVector.rot(heliRoot);
-                heliRoot.trn(moveVector);
+                moveVector.rot(this.heliPlayer.rootTransform);
+                this.heliPlayer.rootTransform.trn(moveVector);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.S)) {
                 moveVector.set(0, -0.05f, 0);
-                moveVector.rot(heliRoot);
-                heliRoot.trn(moveVector);
+                moveVector.rot(this.heliPlayer.rootTransform);
+                this.heliPlayer.rootTransform.trn(moveVector);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.A)) {
-                heliRoot.rotate(new Vector3(0, 0, -1f), 1.5f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(0, 0, -1f), 1.5f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.D)) {
-                heliRoot.rotate(new Vector3(0, 0, 1f), 1.5f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(0, 0, 1f), 1.5f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-                heliRoot.rotate(new Vector3(0, 1f, 0), 2f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(0, 1f, 0), 2f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-                heliRoot.rotate(new Vector3(0, 1f, 0), -2f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(0, 1f, 0), -2f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.UP)) {
-                heliRoot.rotate(new Vector3(1f, 0, 0), 2f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(1f, 0, 0), 2f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-                heliRoot.rotate(new Vector3(1f, 0, 0), -2f);
+                this.heliPlayer.rootTransform.rotate(new Vector3(1f, 0, 0), -2f);
             }
 
             float scrollAmount = Gdx.input.getRoll();
@@ -274,31 +263,22 @@ public class Main implements ApplicationListener {
 
             float zoomSpeed = 0.2f;
             if(Gdx.input.isKeyPressed(Input.Keys.I)) {
-                camDistanceFromTarget -= zoomSpeed; // Zoom In
+                camDistanceFromTarget -= zoomSpeed;
             }
             if(Gdx.input.isKeyPressed(Input.Keys.O)) {
-                camDistanceFromTarget += zoomSpeed; // Zoom Out
+                camDistanceFromTarget += zoomSpeed;
             }
 
             camDistanceFromTarget = MathUtils.clamp(camDistanceFromTarget, minZoom, maxZoom);
-
-            heliRoot.getTranslation(playerPos);
-            heliRoot.getRotation(heliRotation);
+            
+            this.heliPlayer.updatePosRot(playerPos, playerRot);
 
             if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseCatched)) {
                 if (currentAmmoInClip > 0 && !isReloading) {
-                    Missile missile = new Missile(missileModel, heliRoot);
+                    Missile missile = new Missile(missileModel, this.heliPlayer.rootTransform);
                     activeMissiles.add(missile);
                     instances.add(missile.instance);
                     currentAmmoInClip--;
-                    // (Opsional: untuk debug di konsol)
-                    System.out.println("MISIL DITEMBAKKAN! Sisa klip: " + currentAmmoInClip);
-                } else if (isReloading) {
-                    // (Opsional: untuk debug di konsol)
-                    System.out.println("SEDANG RELOAD!");
-                } else {
-                    // (Opsional: untuk debug di konsol)
-                    System.out.println("AMMO HABIS! TEKAN 'R' UNTUK RELOAD!");
                 }
             }
 
@@ -309,11 +289,6 @@ public class Main implements ApplicationListener {
             if (!isReloading && currentAmmoInClip < maxAmmoInClip && totalReserveAmmo > 0) {
                 isReloading = true;
                 currentReloadTimer = 0f;
-                // (Opsional: untuk debug di konsol)
-                System.out.println("RELOADING... (Tunggu " + reloadCooldownTime + " detik)");
-            } else if (totalReserveAmmo <= 0 && currentAmmoInClip < maxAmmoInClip) {
-                // (Opsional: untuk debug di konsol)
-                System.out.println("AMMO CADANGAN HABIS!");
             }
         }
 
@@ -325,8 +300,6 @@ public class Main implements ApplicationListener {
                 int ammoToReload = Math.min(ammoNeeded, totalReserveAmmo);
                 currentAmmoInClip += ammoToReload;
                 totalReserveAmmo -= ammoToReload;
-                // (Opsional: untuk debug di konsol)
-                System.out.println("RELOAD SELESAI! Klip: " + currentAmmoInClip + " / Cadangan: " + totalReserveAmmo);
             }
         }
 
@@ -334,15 +307,12 @@ public class Main implements ApplicationListener {
         while(iter.hasNext()) {
             Missile missile = iter.next();
 
-            // Update timer
             missile.lifeTimer += Gdx.graphics.getDeltaTime();
 
-            // Cek jika misil sudah "habis"
             if(missile.lifeTimer > Missile.missileLifetime) {
-                iter.remove(); // Hapus dari list update
-                instances.removeValue(missile.instance, true); // Hapus dari list render
+                iter.remove();
+                instances.removeValue(missile.instance, true);
             } else {
-                // Gerakkan misil
                 missile.instance.transform.trn(missile.velocity.x * Gdx.graphics.getDeltaTime(),
                     missile.velocity.y * Gdx.graphics.getDeltaTime(),
                     missile.velocity.z * Gdx.graphics.getDeltaTime());
@@ -361,7 +331,6 @@ public class Main implements ApplicationListener {
         String ammoInClipText = Integer.toString(currentAmmoInClip);
         String totalAmmoText = Integer.toString(totalReserveAmmo);
 
-		String ammoText = currentAmmoInClip + " / " + totalReserveAmmo;
  		float screenWidth = Gdx.graphics.getWidth();
  		
  		layout.setText(fontsPricedown.get(1), ammoInClipText);
@@ -370,19 +339,12 @@ public class Main implements ApplicationListener {
  		layout.setText(fontsPricedown.get(1), totalAmmoText);
  		fontsPricedown.get(1).draw(spriteBatch, totalAmmoText, Gdx.graphics.getWidth() - layout.width - 10, Gdx.graphics.getHeight() - 10);
 
-// 		layout.setText(fonts.get(1), ammoText);
- 		float ammoTextX = screenWidth - layout.width - 10; // 10 pixel margin
- 		float ammoTextY = Gdx.graphics.getHeight() - 10; // 10 pixel margin from top
-
-// 		fonts.get(1).draw(spriteBatch, ammoText, ammoTextX, ammoTextY);
+ 		// float ammoTextX = screenWidth - layout.width - 10;
+ 		float ammoTextY = Gdx.graphics.getHeight() - 10;
 
 		if (isReloading) {
-		    float reloadProgress = (currentReloadTimer / reloadCooldownTime) * 100;
-		    String reloadText = String.format("RELOADING... (%.0f%%)", reloadProgress);
-		
-		    // Calculate position for Reload Text (Below Ammo Text, also Top Right)
+		    String reloadText = "RELOADING...";
 		    layout.setText(fontsPricedown.get(0), reloadText);
-		 	// Use the same margin calculation for X
 		 	float reloadTextX = screenWidth - layout.width - 10; 
 		 	float reloadTextY = ammoTextY - 50; 
 		 	fontsPricedown.get(0).draw(spriteBatch, reloadText, reloadTextX, reloadTextY);
@@ -396,7 +358,7 @@ public class Main implements ApplicationListener {
             yaw += mouseDeltaX * 0.3f;
             pitch += mouseDeltaY * 0.3f;
         } else if (isMovingForward) {
-            float targetYaw = heliRotation.getYaw();
+            float targetYaw = playerRot.getYaw();
             float cameraTargetYaw = targetYaw + 180f;
             yaw = MathUtils.lerpAngleDeg(yaw, cameraTargetYaw, Gdx.graphics.getDeltaTime() * smoothnessRecenter);
         }
