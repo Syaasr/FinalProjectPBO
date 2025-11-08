@@ -54,13 +54,21 @@ public class HelicopterGenerator {
 		return this.getRotor() != null && this.getFuselage() != null;
 	}
 	
-	public void update() {
+	public void updateTransform() {
 		if(this.rotorCanMove) {
 			this.localRotor.rotate(new Vector3(0, 1f, 0), this.rotorSpeed);
 		}
 		
 		this.fuselage.transform.set(this.rootTransform).mul(this.localFuselage);
 		this.getRotor().transform.set(this.rootTransform).mul(this.localRotor);
+	}
+	
+	public void updateInput() {
+		if(!this.isPlayable) {
+			return;
+		}
+		
+		
 	}
 	
 	public void updatePosRot(Vector3 pos, Quaternion rot) {

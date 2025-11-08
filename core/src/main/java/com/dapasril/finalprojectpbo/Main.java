@@ -24,11 +24,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.Color;
-import java.util.Iterator;
 import java.util.Random;
 
-import javax.crypto.spec.DHGenParameterSpec;
-
+import com.dapasril.finalprojectpbo.camera.OurThirdPersonCamera;
 import com.dapasril.finalprojectpbo.entity.HelicopterGenerator;
 import com.dapasril.finalprojectpbo.entity.Missile;
 
@@ -36,6 +34,8 @@ import com.dapasril.finalprojectpbo.entity.Missile;
 public class Main implements ApplicationListener {
 
     public PerspectiveCamera cam;
+    public OurThirdPersonCamera tpsCam;
+    
     public Environment environment;
     public boolean mouseCatched;
 
@@ -49,22 +49,9 @@ public class Main implements ApplicationListener {
     Array<HelicopterGenerator> heliEnemies;
     int enemyCount = 5;
     
-    // Camera Controls
-    Matrix4 cameraRoot = new Matrix4().setToTranslation(0, 0, 0);
-    Matrix4 cameraPositionLocal = new Matrix4();
-    Vector3 camPivot = new Vector3();
-    float camDistanceFromTarget = 17f;
-    private float yaw = 0;
-    private float pitch = 20;
-    private float minZoom = 5f;
-    private float maxZoom = 50f;
-
-    private Vector3 cameraTarget = new Vector3();
+    // Camera
     private Quaternion playerRot = new Quaternion();
     private Vector3 playerPos = new Vector3();
-    private float smoothnessFollow = 5f;
-    private float smoothnessRecenter = 3f;
-    private Vector3 moveVector = new Vector3();
 
     // World
     ModelInstance island1Instance, water1Instance;
@@ -121,7 +108,7 @@ public class Main implements ApplicationListener {
         cam.position.set(0f, 5f, -10f);
         cam.lookAt(0, 0, 0);
         cam.near = 1f;
-        cam.far = 2000f;
+        cam.far = 1500f;
         cam.update();
 
         // Creating the Environment
@@ -136,6 +123,9 @@ public class Main implements ApplicationListener {
         for(int i = 0; i < this.enemyCount; i++) {
         	this.heliEnemies.add(new HelicopterGenerator(false));
         }
+        
+        this.tpsCam = new OurThirdPersonCamera(this.cam, this.heliPlayer.rootTransform);
+        Gdx.input.setInputProcessor(tpsCam);
 
         // Loading the Heli67
         HelicopterGenerator.loadModels(assets, heliPlayer);
@@ -174,6 +164,7 @@ public class Main implements ApplicationListener {
     		float y = MathUtils.random(-10, 20);
             float z = MathUtils.random(-spreadArea / 2, spreadArea / 2);
     		hg.rootTransform.setToTranslation(x, y, z);
+    		hg.updateTransform();
     	}
     	
         // Setting the world like island and water ya know
@@ -217,8 +208,6 @@ public class Main implements ApplicationListener {
 
         // Setting the missile boom boom 1
         this.missileModel = assets.get("gta3/missile1/missile1.g3db", Model.class);
-
-        this.heliPlayer.rootTransform.getTranslation(cameraTarget);
         
         loading = false;
     }
@@ -249,26 +238,22 @@ public class Main implements ApplicationListener {
         	if(hg.nullChecker()) {
         		hg.rootTransform.translate(0,0, 0.15f);
         		hg.rootTransform.rotate(Vector3.Y, new Random().nextFloat(0,0.15f));
-        		hg.update();
+        		hg.updateTransform();
         	}
         }
         
         if(this.heliPlayer.nullChecker()) {
         	
-        	this.heliPlayer.update();
+        	this.heliPlayer.updateTransform();
 
             // Heli Control
             isMovingForward = Gdx.input.isKeyPressed(Input.Keys.W);
             if(isMovingForward) {
-                moveVector.set(0, 0.1f, 0.2f);
-                moveVector.rot(this.heliPlayer.rootTransform);
-                this.heliPlayer.rootTransform.trn(moveVector);
+            	this.tpsCam.setAndRot(0, 0.1f, 0.2f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.S)) {
-                moveVector.set(0, -0.05f, 0);
-                moveVector.rot(this.heliPlayer.rootTransform);
-                this.heliPlayer.rootTransform.trn(moveVector);
+            	this.tpsCam.setAndRot(0, -0.05f, 0f);
             }
 
             if(Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -294,22 +279,6 @@ public class Main implements ApplicationListener {
             if(Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
                 this.heliPlayer.rootTransform.rotate(new Vector3(1f, 0, 0), -2f);
             }
-
-            float scrollAmount = Gdx.input.getRoll();
-            if (scrollAmount != 0) {
-                float scrollSpeed = 1.5f;
-                camDistanceFromTarget += scrollAmount * scrollSpeed;
-            }
-
-            float zoomSpeed = 0.2f;
-            if(Gdx.input.isKeyPressed(Input.Keys.I)) {
-                camDistanceFromTarget -= zoomSpeed;
-            }
-            if(Gdx.input.isKeyPressed(Input.Keys.O)) {
-                camDistanceFromTarget += zoomSpeed;
-            }
-
-            camDistanceFromTarget = MathUtils.clamp(camDistanceFromTarget, minZoom, maxZoom);
             
             this.heliPlayer.updatePosRot(playerPos, playerRot);
 
@@ -322,7 +291,7 @@ public class Main implements ApplicationListener {
                 }
             }
 
-            cameraTarget.lerp(playerPos, Gdx.graphics.getDeltaTime() * smoothnessFollow);
+            this.tpsCam.updateLerp();
         }
         
         if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
@@ -362,29 +331,7 @@ public class Main implements ApplicationListener {
         modelBatch.render(instances, environment);
         modelBatch.end();
         
-        camPivot.set(cameraTarget);
-
-        if (mouseDeltaX != 0 || mouseDeltaY != 0) {
-            yaw += mouseDeltaX * 0.3f;
-            pitch += mouseDeltaY * 0.3f;
-        } else if (isMovingForward) {
-            float targetYaw = playerRot.getYaw();
-            float cameraTargetYaw = targetYaw + 180f;
-            yaw = MathUtils.lerpAngleDeg(yaw, cameraTargetYaw, Gdx.graphics.getDeltaTime() * smoothnessRecenter);
-        }
-
-
-        pitch = MathUtils.clamp(pitch, -80f, 80f);
-
-        float radYaw = MathUtils.degreesToRadians * yaw;
-        float radPitch = MathUtils.degreesToRadians * pitch;
-
-        float x = camPivot.x + camDistanceFromTarget * MathUtils.cos(radPitch) * MathUtils.sin(radYaw);
-        float y = camPivot.y + camDistanceFromTarget * MathUtils.sin(radPitch);
-        float z = camPivot.z + camDistanceFromTarget * MathUtils.cos(radPitch) * MathUtils.cos(radYaw);
-
-        cam.position.set(x, y, z);
-        cam.lookAt(camPivot);
+        this.tpsCam.updatePivot();
         cam.up.set(Vector3.Y);
         cam.update();
         // End 3D
