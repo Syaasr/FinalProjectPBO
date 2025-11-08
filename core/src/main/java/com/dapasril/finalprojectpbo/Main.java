@@ -82,10 +82,11 @@ public class Main implements ApplicationListener {
     
     // Texts
     SpriteBatch spriteBatch;
-    BitmapFont font;
-    FreeTypeFontGenerator generator;
-    FreeTypeFontParameter parameter;
-    
+    Array<BitmapFont> fontsPricedown;
+    Array<FreeTypeFontParameter> fontParameters;
+    final int fontSizes = 6;
+    final int initialFontSize = 16; 
+    FreeTypeFontGenerator fontGenerator;
 
     @Override
     public void create() {
@@ -95,16 +96,22 @@ public class Main implements ApplicationListener {
         
         // 2D
         spriteBatch = new SpriteBatch();
-        //font = new BitmapFont();
-        //font.getData().setScale(2f);
         
         // Fonts
-        generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/pricedown.otf"));
-        parameter = new FreeTypeFontParameter();
-        parameter.size = 24;
-        parameter.borderWidth = 1.5f;
-        parameter.borderColor = Color.BLACK;
-        font = generator.generateFont(parameter);
+        this.fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/pricedown.otf"));
+        this.fontsPricedown = new Array<BitmapFont>();
+        this.fontParameters = new Array<FreeTypeFontParameter>();
+        
+        for(int i = 0; i < this.fontSizes; i++) {        	
+        	// Setting the parameter
+        	this.fontParameters.add(new FreeTypeFontParameter());
+        	this.fontParameters.get(i).size = (int)(this.initialFontSize * (1.61803398875f * (i + 1)));
+        	this.fontParameters.get(i).borderWidth = 1.5f;
+        	this.fontParameters.get(i).borderColor = Color.BLACK;
+        	
+        	// Setting the fonts
+        	this.fontsPricedown.add(fontGenerator.generateFont(this.fontParameters.get(i)));
+        }
 
         // Creating Camera
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -350,26 +357,35 @@ public class Main implements ApplicationListener {
         // Doing the 2D
         spriteBatch.begin();
         GlyphLayout layout = new GlyphLayout();
+        
+        String ammoInClipText = Integer.toString(currentAmmoInClip);
+        String totalAmmoText = Integer.toString(totalReserveAmmo);
 
 		String ammoText = currentAmmoInClip + " / " + totalReserveAmmo;
  		float screenWidth = Gdx.graphics.getWidth();
+ 		
+ 		layout.setText(fontsPricedown.get(1), ammoInClipText);
+ 		fontsPricedown.get(1).draw(spriteBatch, ammoInClipText, Gdx.graphics.getWidth() - layout.width - ((10 * totalAmmoText.length()) + this.fontParameters.get(1).size), Gdx.graphics.getHeight() - 10);
+ 		
+ 		layout.setText(fontsPricedown.get(1), totalAmmoText);
+ 		fontsPricedown.get(1).draw(spriteBatch, totalAmmoText, Gdx.graphics.getWidth() - layout.width - 10, Gdx.graphics.getHeight() - 10);
 
- 		layout.setText(font, ammoText);
+// 		layout.setText(fonts.get(1), ammoText);
  		float ammoTextX = screenWidth - layout.width - 10; // 10 pixel margin
  		float ammoTextY = Gdx.graphics.getHeight() - 10; // 10 pixel margin from top
 
- 		font.draw(spriteBatch, ammoText, ammoTextX, ammoTextY);
+// 		fonts.get(1).draw(spriteBatch, ammoText, ammoTextX, ammoTextY);
 
 		if (isReloading) {
 		    float reloadProgress = (currentReloadTimer / reloadCooldownTime) * 100;
 		    String reloadText = String.format("RELOADING... (%.0f%%)", reloadProgress);
 		
 		    // Calculate position for Reload Text (Below Ammo Text, also Top Right)
-		    layout.setText(font, reloadText);
+		    layout.setText(fontsPricedown.get(0), reloadText);
 		 	// Use the same margin calculation for X
 		 	float reloadTextX = screenWidth - layout.width - 10; 
-		 	float reloadTextY = ammoTextY - 30; 
-		 	font.draw(spriteBatch, reloadText, reloadTextX, reloadTextY);
+		 	float reloadTextY = ammoTextY - 50; 
+		 	fontsPricedown.get(0).draw(spriteBatch, reloadText, reloadTextX, reloadTextY);
 		}
 
 		spriteBatch.end();
@@ -409,8 +425,9 @@ public class Main implements ApplicationListener {
         missileModel.dispose();
 
         spriteBatch.dispose();
-        font.dispose();
-        generator.dispose();
+        fontsPricedown.clear();
+        fontParameters.clear();
+        fontGenerator.dispose();
     }
 
     @Override
