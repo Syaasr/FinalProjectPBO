@@ -19,7 +19,10 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.Color;
 import java.util.Iterator;
 
@@ -76,19 +79,32 @@ public class Main implements ApplicationListener {
     boolean isReloading = false;
     float reloadCooldownTime = 3.0f;
     float currentReloadTimer = 0f;
-
+    
+    // Texts
     SpriteBatch spriteBatch;
     BitmapFont font;
+    FreeTypeFontGenerator generator;
+    FreeTypeFontParameter parameter;
+    
 
     @Override
     public void create() {
         Bullet.init();
 
         modelBatch = new ModelBatch();
-
+        
+        // 2D
         spriteBatch = new SpriteBatch();
-        font = new BitmapFont();
-        font.getData().setScale(2f);
+        //font = new BitmapFont();
+        //font.getData().setScale(2f);
+        
+        // Fonts
+        generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/pricedown.otf"));
+        parameter = new FreeTypeFontParameter();
+        parameter.size = 24;
+        parameter.borderWidth = 1.5f;
+        parameter.borderColor = Color.BLACK;
+        font = generator.generateFont(parameter);
 
         // Creating Camera
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -330,17 +346,33 @@ public class Main implements ApplicationListener {
         modelBatch.begin(cam);
         modelBatch.render(instances, environment);
         modelBatch.end();
-
+        
+        // Doing the 2D
         spriteBatch.begin();
+        GlyphLayout layout = new GlyphLayout();
 
-        String ammoText = "AMMO: " + currentAmmoInClip + " / " + totalReserveAmmo;
-        font.draw(spriteBatch, ammoText, 10, Gdx.graphics.getHeight() - 10);
-        if (isReloading) {
-            float reloadProgress = (currentReloadTimer / reloadCooldownTime) * 100;
-            String reloadText = String.format("RELOADING... (%.0f%%)", reloadProgress);
-            font.draw(spriteBatch, reloadText, 10, Gdx.graphics.getHeight() - 30);
-        }
-        spriteBatch.end();
+		String ammoText = currentAmmoInClip + " / " + totalReserveAmmo;
+ 		float screenWidth = Gdx.graphics.getWidth();
+
+ 		layout.setText(font, ammoText);
+ 		float ammoTextX = screenWidth - layout.width - 10; // 10 pixel margin
+ 		float ammoTextY = Gdx.graphics.getHeight() - 10; // 10 pixel margin from top
+
+ 		font.draw(spriteBatch, ammoText, ammoTextX, ammoTextY);
+
+		if (isReloading) {
+		    float reloadProgress = (currentReloadTimer / reloadCooldownTime) * 100;
+		    String reloadText = String.format("RELOADING... (%.0f%%)", reloadProgress);
+		
+		    // Calculate position for Reload Text (Below Ammo Text, also Top Right)
+		    layout.setText(font, reloadText);
+		 	// Use the same margin calculation for X
+		 	float reloadTextX = screenWidth - layout.width - 10; 
+		 	float reloadTextY = ammoTextY - 30; 
+		 	font.draw(spriteBatch, reloadText, reloadTextX, reloadTextY);
+		}
+
+		spriteBatch.end();
 
         camPivot.set(cameraTarget);
 
@@ -378,6 +410,7 @@ public class Main implements ApplicationListener {
 
         spriteBatch.dispose();
         font.dispose();
+        generator.dispose();
     }
 
     @Override
