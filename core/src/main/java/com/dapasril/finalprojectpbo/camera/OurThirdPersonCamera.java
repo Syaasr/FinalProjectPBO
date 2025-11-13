@@ -4,54 +4,52 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-public class OurThirdPersonCamera extends InputAdapter{
-	public PerspectiveCamera cam;
-	
-	Matrix4 rootTransform = new Matrix4().setToTranslation(0, 0, 0);
+public class OurThirdPersonCamera extends InputAdapter {
+    public PerspectiveCamera cam;
+
+    Matrix4 rootTransform = new Matrix4().setToTranslation(0, 0, 0);
     Matrix4 localTransform = new Matrix4();
     Vector3 pivot = new Vector3();
-    
+
     float distanceFromTarget = 17f;
-    
+
     private float minZoom = 5f;
     private float maxZoom = 50f;
     public float zoomSpeed = 1f;
-    
+
     private float yaw = 0;
     private float pitch = 20;
-    
+
     private Vector3 cameraTarget = new Vector3();
-    
+
     private float smoothnessFollow = 5f;
     private float smoothnessRecenter = 3f;
-    private Vector3 moveVector = new Vector3();
-    
+
     public Matrix4 targetTransform;
     public Vector3 targetPos = new Vector3();
     public Quaternion targetRot = new Quaternion();
-	
-	public OurThirdPersonCamera(PerspectiveCamera cam, Matrix4 targetTransform) {
-		this.cam = cam;
-		this.targetTransform = targetTransform;
-	}
-	
-	public void updateLerp() {
-		this.targetTransform.getTranslation(this.targetPos);
-		this.targetTransform.getRotation(this.targetRot);
-		this.cameraTarget.lerp(this.targetPos, Gdx.graphics.getDeltaTime() * this.smoothnessFollow);
-	}
-	
-	public void updatePivot() {
-		this.pivot.set(cameraTarget);
-		
-		float mouseDeltaX = -Gdx.input.getDeltaX();
-		float mouseDeltaY = -Gdx.input.getDeltaY();
+
+    public OurThirdPersonCamera(PerspectiveCamera cam, Matrix4 targetTransform) {
+        this.cam = cam;
+        this.targetTransform = targetTransform;
+    }
+
+    public void updateLerp() {
+        this.targetTransform.getTranslation(this.targetPos);
+        this.targetTransform.getRotation(this.targetRot);
+        this.cameraTarget.lerp(this.targetPos, Gdx.graphics.getDeltaTime() * this.smoothnessFollow);
+    }
+
+    public void updatePivot() {
+        this.pivot.set(cameraTarget);
+
+        float mouseDeltaX = -Gdx.input.getDeltaX();
+        float mouseDeltaY = -Gdx.input.getDeltaY();
 
         if (mouseDeltaX != 0 || mouseDeltaY != 0) {
             yaw += mouseDeltaX * 0.3f;
@@ -61,7 +59,6 @@ public class OurThirdPersonCamera extends InputAdapter{
             float cameraTargetYaw = targetYaw + 180f;
             yaw = MathUtils.lerpAngleDeg(yaw, cameraTargetYaw, Gdx.graphics.getDeltaTime() * smoothnessRecenter);
         }
-
 
         pitch = MathUtils.clamp(pitch, -80f, 80f);
 
@@ -74,35 +71,19 @@ public class OurThirdPersonCamera extends InputAdapter{
 
         cam.position.set(x, y, z);
         cam.lookAt(this.pivot);
-	}
-	
-	// Method overloading
-	public void setAndRot(float x, float y, float z) {
-		this.moveVector.set(x, y, z);
-		this.afterSetThePos();
-	}
-	
-	public void setAndRot(Vector3 xyz) {
-		this.moveVector.set(xyz);
-		this.afterSetThePos();
-	}
-	
-	private void afterSetThePos() {
-		this.moveVector.rot(this.targetTransform);
-		this.targetTransform.trn(moveVector);
-	}
-	
-	// Method overriding
-	@Override
-	public boolean scrolled(float amountX, float amountY) {
-		if(amountY > 0) {
-			this.distanceFromTarget += this.zoomSpeed;
-		} else if (amountY < 0) {
-			this.distanceFromTarget -= this.zoomSpeed;
-		}
-		
-		this.distanceFromTarget = MathUtils.clamp(this.distanceFromTarget, minZoom, maxZoom);
-		
-		return true;
-	}
+    }
+
+    // Method overriding
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        if (amountY > 0) {
+            this.distanceFromTarget += this.zoomSpeed;
+        } else if (amountY < 0) {
+            this.distanceFromTarget -= this.zoomSpeed;
+        }
+
+        this.distanceFromTarget = MathUtils.clamp(this.distanceFromTarget, minZoom, maxZoom);
+
+        return true;
+    }
 }
