@@ -2,7 +2,6 @@ package com.dapasril.finalprojectpbo;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.Input;
 
 public class Global {
